@@ -14,7 +14,7 @@ use Iterator;
  * @link		https://github.com/Coercive/Iterator
  *
  * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   (c) 2018 Anthony Moral
+ * @copyright   (c) 2019 Anthony Moral
  * @license 	MIT
  */
 class MbStrIterator implements Iterator
@@ -37,7 +37,7 @@ class MbStrIterator implements Iterator
 	public function __construct(string $str)
 	{
 		$this->str = $str;
-		$this->calculateSize();
+		$this->assess();
 	}
 
 	/**
@@ -45,7 +45,7 @@ class MbStrIterator implements Iterator
 	 *
 	 * @return void
 	 */
-	private function calculateSize()
+	private function assess()
 	{
 		# If we're done already
 		if(!isset($this->str[$this->pos])) {
@@ -122,7 +122,7 @@ class MbStrIterator implements Iterator
 	public function next()
 	{
 		$this->pos += $this->size;
-		$this->calculateSize();
+		$this->assess();
 	}
 
 	/**
@@ -134,7 +134,7 @@ class MbStrIterator implements Iterator
 	public function rewind()
 	{
 		$this->pos = 0;
-		$this->calculateSize();
+		$this->assess();
 	}
 
 	/**
