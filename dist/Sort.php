@@ -22,8 +22,11 @@ class Sort
 	/** @var bool Insensitive case flags for sorting array */
 	private bool $insensitive = false;
 
-	/** @var bool If target key does not match, remove entry or add it anyway */
-	private bool $strict = true;
+	/** @var int SORT_ASC | SORT_DESC */
+	private int $order = 0;
+
+	/** @var int Targeted key level for sorting array */
+	private int $level = 0;
 
 	/**
 	 * Specific sorting flag for insensitive case
@@ -36,33 +39,59 @@ class Sort
 	}
 
 	/**
+	 * Main method recursive search key for sorting array
+	 *
+	 * @param string $key
+	 * @param array $array
+	 * @param array|null $sortable [reference]
+	 * @param string|null $mainKey [reference]
+	 * @param int $level [optional]
+	 * @return void
+	 */
+	private function find(string $key, array $array, ? array &$sortable = null, ? string &$mainKey = null, int $level = 0)
+	{
+		if(null === $sortable) {
+			$sortable = [];
+		}
+		foreach ($array as $k => $v) {
+			$k = strval($k);
+			if($level === 0) {
+				$mainKey = $k;
+			}
+			if ($k === $key && (!$this->level || $this->level === $level)) {
+				if(!array_key_exists($mainKey, $sortable)) {
+					$sortable[$mainKey] = $v;
+				}
+				elseif($this->order === SORT_ASC && (!$this->insensitive && $sortable[$mainKey] > $v
+						|| $this->insensitive && strcasecmp($sortable[$mainKey], $v) > 0)) {
+					$sortable[$mainKey] = $v;
+				}
+				elseif($this->order === SORT_DESC && (!$this->insensitive && $sortable[$mainKey] < $v
+						|| $this->insensitive && strcasecmp($sortable[$mainKey], $v) < 0)) {
+					$sortable[$mainKey] = $v;
+				}
+			}
+			elseif (is_array($v) && (!$this->level || $this->level > $level)) {
+				$this->find($key, $v, $sortable, $mainKey, $level + 1);
+			}
+		}
+	}
+
+	/**
 	 * Main data sorting method
 	 *
 	 * @param string $key
-	 * @param int $order
 	 * @return array
 	 */
-	private function sort(string $key, int $order): array
+	private function sort(string $key): array
 	{
 		if (!$this->source) {
 			return [];
 		}
 
-		$sortable = [];
-		foreach ($this->source as $k => $v) {
-			if (is_array($v)) {
-				foreach ($v as $sk => $sv) {
-					if (strval($sk) === $key) {
-						$sortable[$k] = $sv;
-					}
-				}
-			}
-			elseif(!$this->strict) {
-				$sortable[$k] = $v;
-			}
-		}
+		$this->find($key, $this->source, $sortable);
 
-		switch ($order) {
+		switch ($this->order) {
 			case SORT_ASC:
 				asort($sortable, $this->getSortFlags());
 				break;
@@ -90,18 +119,6 @@ class Sort
 	}
 
 	/**
-	 * If target key does not match, remove entry or add it anyway
-	 *
-	 * @param bool $enable [optional]
-	 * @return $this
-	 */
-	public function strict(bool $enable = false): self
-	{
-		$this->strict = $enable;
-		return $this;
-	}
-
-	/**
 	 * Case insensitive for sorting values
 	 *
 	 * @param bool $enable [optional]
@@ -114,24 +131,46 @@ class Sort
 	}
 
 	/**
+	 * Key level for sorting values
+	 *
+	 * @param int $level [optional]
+	 * @return $this
+	 */
+	public function level(int $level = 0): self
+	{
+		$this->level = $level;
+		return $this;
+	}
+
+	/**
 	 * Array sort ASCENDING
 	 *
 	 * @param string $key
+	 * @param int|null $level [optional]
 	 * @return array
 	 */
-	public function asc(string $key): array
+	public function asc(string $key, ? int $level = null): array
 	{
-		return $this->sort($key, SORT_ASC);
+		if(null !== $level) {
+			$this->level($level);
+		}
+		$this->order = SORT_ASC;
+		return $this->sort($key);
 	}
 
 	/**
 	 * Array sort DESCENDING
 	 *
 	 * @param string $key
+	 * @param int|null $level [optional]
 	 * @return array
 	 */
-	public function desc(string $key): array
+	public function desc(string $key, ? int $level = null): array
 	{
-		return $this->sort($key, SORT_DESC);
+		if(null !== $level) {
+			$this->level($level);
+		}
+		$this->order = SORT_DESC;
+		return $this->sort($key);
 	}
 }

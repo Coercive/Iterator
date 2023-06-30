@@ -36,18 +36,16 @@ $examples = array(
     5 => array(
         'id' => 'AAbcd',
     ),
-    'badEntry1' => 'error1',
-    'badEntry2' => 'error2',
 );
 
 # Instantiate with data
 $array = new Sort($examples);
 
-# Set insensitive if useful
+# [optional] Set case-insensitive if useful
 $array->insensitive(true);
 
-# Set insensitive if useful
-$array->strict(true);
+# [optional] Set targeted key level
+$array->level(1);
 
 # Sort ASCENDING
 $sorted = $array->asc('id');
